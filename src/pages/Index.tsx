@@ -21,11 +21,11 @@ import {
   PlayerStats,
 } from "@/lib/types";
 
-type View = "case" | "classify" | "flaw" | "confidence" | "results" | "stats";
+type View = "play" | "results" | "stats";
 
 const Index = () => {
   const dailyCase = getTodaysCase();
-  const [view, setView] = useState<View>("case");
+  const [view, setView] = useState<View>("play");
   const [classification, setClassification] = useState<Classification>();
   const [flaw, setFlaw] = useState<FlawCategory>();
   const [score, setScore] = useState<ScoreBreakdown>();
@@ -45,6 +45,9 @@ const Index = () => {
 
   const handleClassification = (c: Classification) => {
     setClassification(c);
+    if (c !== "misresolved") {
+      setFlaw(undefined);
+    }
   };
 
   const handleFlaw = (f: FlawCategory) => {
@@ -52,6 +55,7 @@ const Index = () => {
   };
 
   const handleSubmit = (confidence: number) => {
+    if (!classification) return;
     const playerAnswer: PlayerAnswer = {
       classification: classification!,
       flaw,
@@ -75,22 +79,7 @@ const Index = () => {
     setView("results");
   };
 
-  const advanceFromCase = () => setView("classify");
-
-  const advanceFromClassify = () => {
-    if (!classification) return;
-    if (classification === "misresolved") {
-      setView("flaw");
-    } else {
-      setFlaw(undefined);
-      setView("confidence");
-    }
-  };
-
-  const advanceFromFlaw = () => {
-    if (!flaw) return;
-    setView("confidence");
-  };
+  const canSubmit = classification && (classification !== "misresolved" || flaw);
 
   return (
     <div className="min-h-screen bg-background">
