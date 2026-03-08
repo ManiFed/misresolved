@@ -21,11 +21,11 @@ import {
   PlayerStats,
 } from "@/lib/types";
 
-type View = "case" | "classify" | "flaw" | "confidence" | "results" | "stats";
+type View = "play" | "results" | "stats";
 
 const Index = () => {
   const dailyCase = getTodaysCase();
-  const [view, setView] = useState<View>("case");
+  const [view, setView] = useState<View>("play");
   const [classification, setClassification] = useState<Classification>();
   const [flaw, setFlaw] = useState<FlawCategory>();
   const [score, setScore] = useState<ScoreBreakdown>();
@@ -45,6 +45,9 @@ const Index = () => {
 
   const handleClassification = (c: Classification) => {
     setClassification(c);
+    if (c !== "misresolved") {
+      setFlaw(undefined);
+    }
   };
 
   const handleFlaw = (f: FlawCategory) => {
@@ -52,6 +55,7 @@ const Index = () => {
   };
 
   const handleSubmit = (confidence: number) => {
+    if (!classification) return;
     const playerAnswer: PlayerAnswer = {
       classification: classification!,
       flaw,
@@ -75,22 +79,7 @@ const Index = () => {
     setView("results");
   };
 
-  const advanceFromCase = () => setView("classify");
-
-  const advanceFromClassify = () => {
-    if (!classification) return;
-    if (classification === "misresolved") {
-      setView("flaw");
-    } else {
-      setFlaw(undefined);
-      setView("confidence");
-    }
-  };
-
-  const advanceFromFlaw = () => {
-    if (!flaw) return;
-    setView("confidence");
-  };
+  const canSubmit = classification && (classification !== "misresolved" || flaw);
 
   return (
     <div className="min-h-screen bg-background">
@@ -100,7 +89,7 @@ const Index = () => {
           <h1 className="text-xl tracking-tight">Misresolved</h1>
           <button
             onClick={() =>
-              setView(view === "stats" ? (score ? "results" : "case") : "stats")
+              setView(view === "stats" ? (score ? "results" : "play") : "stats")
             }
             className="font-mono text-xs uppercase tracking-widest text-muted-foreground transition-colors hover:text-foreground"
           >
@@ -115,7 +104,7 @@ const Index = () => {
           <StatsView
             stats={stats}
             onBack={() =>
-              setView(score ? "results" : "case")
+              setView(score ? "results" : "play")
             }
           />
         ) : view === "results" && score && answer ? (
@@ -132,51 +121,20 @@ const Index = () => {
           <div className="space-y-8">
             <CaseDisplay dailyCase={dailyCase} />
 
-            {view === "case" && (
-              <button
-                onClick={advanceFromCase}
-                className="w-full rounded-md bg-foreground py-3 font-mono text-sm font-medium uppercase tracking-wider text-background transition-opacity hover:opacity-90"
-              >
-                Make Your Call
-              </button>
+            <div className="border-t border-border pt-6">
+              <ClassificationStep
+                onSelect={handleClassification}
+                selected={classification}
+              />
+            </div>
+
+            {classification === "misresolved" && (
+              <div className="border-t border-border pt-6">
+                <FlawStep onSelect={handleFlaw} selected={flaw} />
+              </div>
             )}
 
-            {view === "classify" && (
-              <>
-                <div className="border-t border-border pt-6">
-                  <ClassificationStep
-                    onSelect={handleClassification}
-                    selected={classification}
-                  />
-                </div>
-                {classification && (
-                  <button
-                    onClick={advanceFromClassify}
-                    className="w-full rounded-md bg-foreground py-3 font-mono text-sm font-medium uppercase tracking-wider text-background transition-opacity hover:opacity-90"
-                  >
-                    Continue
-                  </button>
-                )}
-              </>
-            )}
-
-            {view === "flaw" && (
-              <>
-                <div className="border-t border-border pt-6">
-                  <FlawStep onSelect={handleFlaw} selected={flaw} />
-                </div>
-                {flaw && (
-                  <button
-                    onClick={advanceFromFlaw}
-                    className="w-full rounded-md bg-foreground py-3 font-mono text-sm font-medium uppercase tracking-wider text-background transition-opacity hover:opacity-90"
-                  >
-                    Continue
-                  </button>
-                )}
-              </>
-            )}
-
-            {view === "confidence" && (
+            {canSubmit && (
               <div className="border-t border-border pt-6">
                 <ConfidenceStep onSubmit={handleSubmit} />
               </div>
