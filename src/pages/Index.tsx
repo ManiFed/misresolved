@@ -89,7 +89,7 @@ const Index = () => {
           <h1 className="text-xl tracking-tight">Misresolved</h1>
           <button
             onClick={() =>
-              setView(view === "stats" ? (score ? "results" : "case") : "stats")
+              setView(view === "stats" ? (score ? "results" : "play") : "stats")
             }
             className="font-mono text-xs uppercase tracking-widest text-muted-foreground transition-colors hover:text-foreground"
           >
@@ -104,7 +104,7 @@ const Index = () => {
           <StatsView
             stats={stats}
             onBack={() =>
-              setView(score ? "results" : "case")
+              setView(score ? "results" : "play")
             }
           />
         ) : view === "results" && score && answer ? (
@@ -121,51 +121,20 @@ const Index = () => {
           <div className="space-y-8">
             <CaseDisplay dailyCase={dailyCase} />
 
-            {view === "case" && (
-              <button
-                onClick={advanceFromCase}
-                className="w-full rounded-md bg-foreground py-3 font-mono text-sm font-medium uppercase tracking-wider text-background transition-opacity hover:opacity-90"
-              >
-                Make Your Call
-              </button>
+            <div className="border-t border-border pt-6">
+              <ClassificationStep
+                onSelect={handleClassification}
+                selected={classification}
+              />
+            </div>
+
+            {classification === "misresolved" && (
+              <div className="border-t border-border pt-6">
+                <FlawStep onSelect={handleFlaw} selected={flaw} />
+              </div>
             )}
 
-            {view === "classify" && (
-              <>
-                <div className="border-t border-border pt-6">
-                  <ClassificationStep
-                    onSelect={handleClassification}
-                    selected={classification}
-                  />
-                </div>
-                {classification && (
-                  <button
-                    onClick={advanceFromClassify}
-                    className="w-full rounded-md bg-foreground py-3 font-mono text-sm font-medium uppercase tracking-wider text-background transition-opacity hover:opacity-90"
-                  >
-                    Continue
-                  </button>
-                )}
-              </>
-            )}
-
-            {view === "flaw" && (
-              <>
-                <div className="border-t border-border pt-6">
-                  <FlawStep onSelect={handleFlaw} selected={flaw} />
-                </div>
-                {flaw && (
-                  <button
-                    onClick={advanceFromFlaw}
-                    className="w-full rounded-md bg-foreground py-3 font-mono text-sm font-medium uppercase tracking-wider text-background transition-opacity hover:opacity-90"
-                  >
-                    Continue
-                  </button>
-                )}
-              </>
-            )}
-
-            {view === "confidence" && (
+            {canSubmit && (
               <div className="border-t border-border pt-6">
                 <ConfidenceStep onSubmit={handleSubmit} />
               </div>
